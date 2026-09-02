@@ -1,77 +1,67 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:latlong2/latlong.dart' as ll;
 import 'package:go_router/go_router.dart';
+import 'package:maplibre_gl/maplibre_gl.dart';
+
+import '../poi/poi.dart';
 import '../poi/poi_provider.dart';
 import 'location_provider.dart';
 
-class MapScreen extends ConsumerWidget {
+// ConsumerStatefulWidget (pas juste ConsumerWidget) : on a besoin d'un State
+// qui persiste, pour garder une référence au MapLibreMapController. Ce
+// contrôleur n'existe qu'une fois la carte créée (onMapCreated), et c'est
+// lui qu'on utilise pour ajouter/retirer des marqueurs à la main —
+// contrairement à flutter_map où les marqueurs se redessinaient juste en
+// relisant la liste de POI dans build().
+class MapScreen extends ConsumerStatefulWidget {
   const MapScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<MapScreen> createState() => _MapScreenState();
+}
+
+class _MapScreenState extends ConsumerState<MapScreen> {
+  MapLibreMapController? _controller;
+  // Associe l'id de chaque cercle affiché sur la carte au Poi correspondant,
+  // pour retrouver quel POI a été tapé.
+  final Map<String, Poi> _circleToPoi = {};
+
+  @override
+  Widget build(BuildContext context) {
     final positionAsync = ref.watch(positionStreamProvider);
-    // On écoute aussi la liste des POI : dès qu'on en ajoute un, la carte
-    // se redessine automatiquement avec le nouveau marqueur.
-    final pois = ref.watch(poiListProvider);
+
+    // ref.listen (différent de ref.watch) : exécute une fonction à chaque
+    // changement du provider, SANS reconstruire le widget. Parfait ici pour
+    // synchroniser les cercles de façon impérative sans redessiner la carte.
+    ref.listen(poiListProvider, (previous, next) => _syncCircles(next));
 
     return Scaffold(
       appBar: AppBar(title: const Text('Carte')),
       body: positionAsync.when(
-        data: (position) {
-          final userLatLng = ll.LatLng(position.latitude, position.longitude);
-
-          return FlutterMap(
-            options: MapOptions(
-              initialCenter: userLatLng,
-              initialZoom: 16,
-              // onTap donne directement les coordonnées GPS du point touché
-              // sur la carte (converties depuis la position à l'écran).
-              onTap: (tapPosition, point) =>
-                  _showAddPoiDialog(context, ref, point),
-            ),
-            children: [
-              TileLayer(
-                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                userAgentPackageName: 'com.touba7g.map_ar_app',
-              ),
-              MarkerLayer(
-                markers: [
-                  // Marqueur de la position actuelle.
-                  Marker(
-                    point: userLatLng,
-                    width: 40,
-                    height: 40,
-                    child: const Icon(Icons.my_location, color: Colors.blue),
-                  ),
-                  // Un marqueur par POI ajouté. `for` dans une liste littérale
-                  // Dart : génère un Marker pour chaque élément de `pois`.
-                  for (final poi in pois)
-                    Marker(
-                      point: ll.LatLng(poi.latitude, poi.longitude),
-                      width: 40,
-                      height: 40,
-                      child: GestureDetector(
-                        onTap: () => context.push('/ar', extra: poi),
-                        onLongPress: () => ref
-                            .read(poiListProvider.notifier)
-                            .removePoi(poi.id),
-                        child: Tooltip(
-                          message:
-                              '${poi.name} (tap pour visiter, appui long pour supprimer)',
-                          child: const Icon(
-                            Icons.location_on,
-                            color: Colors.red,
-                          ),
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-            ],
-          );
-        },
+        data: (position) => MapLibreMap(
+          styleString: 'https://tiles.openfreemap.org/styles/liberty',
+          initialCameraPosition: CameraPosition(
+            target: LatLng(position.latitude, position.longitude),
+            zoom: 17,
+            tilt: 45, // incline la caméra pour voir les bâtiments en relief
+          ),
+          myLocationEnabled: true, // point bleu natif pour la position GPS
+          onMapCreated: (controller) {
+            _controller = controller;
+            // Écoute le tap sur un cercle existant : ouvre l'écran AR du POI.
+            controller.onCircleTapped.add((circle) {
+              final poi = _circleToPoi[circle.id];
+              if (poi != null) context.push('/ar', extra: poi);
+            });
+          },
+          onStyleLoadedCallback: () {
+            // Synchronise les cercles une première fois une fois le style
+            // chargé (utile après un hot reload par exemple).
+            _syncCircles(ref.read(poiListProvider));
+          },
+          onMapClick: (point, coordinates) =>
+              _showAddPoiDialog(context, ref, coordinates),
+        ),
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, stackTrace) => Center(
           child: Padding(
@@ -83,12 +73,31 @@ class MapScreen extends ConsumerWidget {
     );
   }
 
-  // Boîte de dialogue affichée au tap sur la carte : demande un nom, puis
-  // crée le POI aux coordonnées exactes du tap.
+  // Ajoute un cercle pour chaque POI qui n'en a pas encore.
+  // (Version simple : la suppression n'est pas encore gérée, on l'ajoutera
+  // juste après si tout compile.)
+  Future<void> _syncCircles(List<Poi> pois) async {
+    final controller = _controller;
+    if (controller == null) return;
+
+    final existingIds = _circleToPoi.values.map((p) => p.id).toSet();
+    for (final poi in pois) {
+      if (existingIds.contains(poi.id)) continue;
+      final circle = await controller.addCircle(
+        CircleOptions(
+          geometry: LatLng(poi.latitude, poi.longitude),
+          circleColor: '#e53935',
+          circleRadius: 8,
+        ),
+      );
+      _circleToPoi[circle.id] = poi;
+    }
+  }
+
   Future<void> _showAddPoiDialog(
     BuildContext context,
     WidgetRef ref,
-    ll.LatLng point,
+    LatLng point,
   ) async {
     final controller = TextEditingController();
 
@@ -117,8 +126,6 @@ class MapScreen extends ConsumerWidget {
 
     if (name == null || name.isEmpty) return;
 
-    // Pour l'instant on attache toujours le même modèle 3D (le cerf) à
-    // chaque nouveau point. On rendra ça choisissable plus tard si besoin.
     ref
         .read(poiListProvider.notifier)
         .addPoi(

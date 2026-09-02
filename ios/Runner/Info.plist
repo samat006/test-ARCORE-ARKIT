@@ -70,6 +70,11 @@
     <string>Cette application utilise votre position pour afficher les points d'intérêt proches sur la carte.</string>
 	<key>io.flutter.embedded_views_preview</key>
 	<true/>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsLocalNetworking</key>
+		<true/>
+	</dict>
 
 </dict>
 </plist>
