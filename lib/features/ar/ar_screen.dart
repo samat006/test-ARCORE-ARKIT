@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:model_viewer_plus/model_viewer_plus.dart';
 
 import '../poi/poi.dart';
@@ -15,7 +16,18 @@ class ArScreen extends StatelessWidget {
     final modelUrl = poi.modelUrl;
 
     return Scaffold(
-      appBar: AppBar(title: Text(poi.name)),
+      appBar: AppBar(
+        title: Text(poi.name),
+        actions: [
+          // N'affiche le bouton que si ce point a un panorama associé.
+          if (poi.panoramaUrl != null)
+            IconButton(
+              icon: const Icon(Icons.threesixty),
+              tooltip: 'Vue panoramique',
+              onPressed: () => context.push('/panorama', extra: poi),
+            ),
+        ],
+      ),
       body: modelUrl == null
           ? const Center(child: Text("Ce point n'a pas de modèle 3D associé."))
           : ModelViewer(

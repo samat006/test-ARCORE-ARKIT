@@ -18,6 +18,7 @@ class PoiListNotifier extends Notifier<List<Poi>> {
     required double longitude,
     String description = '',
     String? modelUrl,
+    String? panoramaUrl,
   }) {
     final poi = Poi(
       id: (_nextId++).toString(),
@@ -26,9 +27,8 @@ class PoiListNotifier extends Notifier<List<Poi>> {
       latitude: latitude,
       longitude: longitude,
       modelUrl: modelUrl,
+      panoramaUrl: panoramaUrl,
     );
-    // On ne modifie jamais la liste en place (pas de .add()) : on crée une
-    // nouvelle liste. C'est ce qui déclenche la notification aux widgets.
     state = [...state, poi];
   }
 

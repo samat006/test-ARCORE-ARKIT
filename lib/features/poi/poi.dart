@@ -6,6 +6,7 @@ class Poi {
     required this.latitude,
     required this.longitude,
     this.modelUrl,
+    this.panoramaUrl, // nouveau : chemin vers une photo 360°
   });
 
   final String id;
@@ -14,4 +15,5 @@ class Poi {
   final double latitude;
   final double longitude;
   final String? modelUrl;
+  final String? panoramaUrl;
 }

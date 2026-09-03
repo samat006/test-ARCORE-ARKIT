@@ -4,6 +4,7 @@ import '../../features/ar/ar_screen.dart';
 import '../../features/map/map_screen.dart';
 import '../../features/poi/poi.dart';
 import '../../home_screen.dart';
+import '../../features/panorama/panorama_screen.dart';
 
 final appRouter = GoRouter(
   initialLocation: '/',
@@ -15,6 +16,10 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/ar',
       builder: (context, state) => ArScreen(poi: state.extra! as Poi),
+    ),
+    GoRoute(
+      path: '/panorama',
+      builder: (context, state) => PanoramaScreen(poi: state.extra! as Poi),
     ),
   ],
 );

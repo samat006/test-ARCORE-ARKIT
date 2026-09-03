@@ -73,12 +73,23 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     );
   }
 
-  // Ajoute un cercle pour chaque POI qui n'en a pas encore.
-  // (Version simple : la suppression n'est pas encore gérée, on l'ajoutera
-  // juste après si tout compile.)
+  // Ajoute un cercle pour chaque POI qui n'en a pas encore, et retire les
+  // cercles dont le POI n'existe plus (suppression via la liste).
   Future<void> _syncCircles(List<Poi> pois) async {
     final controller = _controller;
     if (controller == null) return;
+
+    final currentIds = pois.map((p) => p.id).toSet();
+
+    final removedCircleIds = _circleToPoi.entries
+        .where((entry) => !currentIds.contains(entry.value.id))
+        .map((entry) => entry.key)
+        .toList();
+    for (final circleId in removedCircleIds) {
+      final circle = controller.circles.firstWhere((c) => c.id == circleId);
+      await controller.removeCircle(circle);
+      _circleToPoi.remove(circleId);
+    }
 
     final existingIds = _circleToPoi.values.map((p) => p.id).toSet();
     for (final poi in pois) {
@@ -133,6 +144,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
           latitude: point.latitude,
           longitude: point.longitude,
           modelUrl: 'assets/models/Stag.glb',
+          panoramaUrl: 'assets/panoramas/chateau.jpg',
         );
   }
 }
