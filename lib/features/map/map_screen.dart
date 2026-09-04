@@ -43,8 +43,8 @@ class _MapScreenState extends ConsumerState<MapScreen> {
           initialCameraPosition: CameraPosition(
             target: LatLng(position.latitude, position.longitude),
             zoom: 17,
-            tilt: 45, // incline la caméra pour voir les bâtiments en relief
           ),
+
           myLocationEnabled: true, // point bleu natif pour la position GPS
           onMapCreated: (controller) {
             _controller = controller;
