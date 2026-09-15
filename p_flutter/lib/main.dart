@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'form_page.dart';
 import 'result_page.dart';
 import 'map_page.dart';
+import 'ar_page.dart';
 
 void main() {
   runApp(const MyApp());
@@ -13,27 +14,28 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-  home: const homePage(),
+  home: const HomePage(),
 
   routes: {
     '/form': (context) => const FormPage(),
    '/result': (context) => const ResultPage(),
      '/map': (context) => const MapPage(),
+     '/ar': (context) => const ArPage(),
   },
 );
   }
 }
 
-class homePage extends StatefulWidget {
-  const homePage({super.key});
+class HomePage extends StatefulWidget {
+  const HomePage({super.key});
   @override
-  State<homePage> createState() => _homePageState();
+  State<HomePage> createState() => _HomePageState();
 }
 
-class _homePageState extends State<homePage> {
+class _HomePageState extends State<HomePage> {
   final TextEditingController nomController = TextEditingController();
   String nom = '';
-  String Message = '';
+  String message = '';
   @override
   void dispose() {
     nomController.dispose();
@@ -165,6 +167,12 @@ class _homePageState extends State<homePage> {
                 Navigator.pushNamed(context, '/map');
               },
               child: const Text('Voir la carte'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pushNamed(context, '/ar');
+              },
+              child: const Text('Voir en AR'),
             ),
           ],
         ),

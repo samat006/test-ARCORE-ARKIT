@@ -1,6 +1,5 @@
 
 import 'package:flutter/material.dart';
-import 'result_page.dart';
 
 class FormPage extends StatefulWidget {
   const FormPage({super.key});
