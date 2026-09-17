@@ -1,0 +1,15 @@
+JPA, c'est quoi ?
+
+JPA = Java Persistence API.
+
+Ce n'est pas PostgreSQL. C'est une API Java qui permet de faire le lien entre tes objets Java et les données persistées en base.
+
+Sans JPA, tu pourrais écrire du SQL directement :
+
+INSERT INTO places (name, latitude, longitude)
+VALUES ('Calvi', 42.566, 8.757);
+
+Avec JPA, tu manipules plutôt ton objet Java :
+
+Place place = new Place(...);
+repository.save(place);
