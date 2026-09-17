@@ -67,7 +67,7 @@ class _MapPageState extends State<MapPage> {
         'NOMBRE GLYPHES : ${glyphFiles.length}',
       );
 
-      for (final fileName in glyphFiles.take(5)) {
+      for (final fileName in glyphFiles) {
         final assetPath =
             'assets/map/fonts/NotoSansRegular/$fileName';
 
@@ -191,7 +191,7 @@ class _MapPageState extends State<MapPage> {
         minMaxZoomPreference:
             const MinMaxZoomPreference(
           8,
-          14,
+          104,
         ),
         cameraTargetBounds:
             CameraTargetBounds(
