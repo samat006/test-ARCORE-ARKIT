@@ -1,8 +1,11 @@
 package com.example.demo.model;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
 
+@Entity
 public class Place {
-
-    private int id;
+@Id
+private int id;
     private String name;
     private double latitude;
     private double longitude;
