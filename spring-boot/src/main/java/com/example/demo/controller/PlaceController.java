@@ -1,42 +1,36 @@
+
 package com.example.demo.controller;
 
 import com.example.demo.model.Place;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import com.example.demo.service.PlaceService;
+import org.springframework.web.bind.annotation.*;
+import com.example.demo.dto.PlaceResponse;
+import com.example.demo.dto.PlaceRequest;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @RestController
 public class PlaceController {
 
-    private List<Place> places = new ArrayList<>();
+    private final PlaceService placeService;
+
+    public PlaceController(PlaceService placeService) {
+        this.placeService = placeService;
+    }
 
     @GetMapping("/places")
-    public List<Place> getPlaces() {
-        return places;
+    public List<PlaceResponse> getPlaces() {
+        return placeService.getAllPlaces();
     }
 
     @GetMapping("/places/{id}")
-    public Place getPlace(@PathVariable int id) {
-        for (Place place : places) {
-            if (place.getId() == id) {
-                return place;
-            }
-        }
-
-        return null;
+    public PlaceResponse getPlace(@PathVariable int id) {
+        return placeService.toResponse(placeService.getPlaceById(id));
     }
 
     @PostMapping("/places")
-    public Place createPlace(@RequestBody Place place) {
-        places.add(place);
-        return place;
+    public PlaceResponse createPlace(@RequestBody PlaceRequest request) {
+        return placeService.createPlace(request);
     }
 
     @PutMapping("/places/{id}")
@@ -44,21 +38,12 @@ public class PlaceController {
             @PathVariable int id,
             @RequestBody Place updatedPlace) {
 
-        for (Place place : places) {
-            if (place.getId() == id) {
-                place.setName(updatedPlace.getName());
-                place.setLatitude(updatedPlace.getLatitude());
-                place.setLongitude(updatedPlace.getLongitude());
-
-                return place;
-            }
-        }
-
-        return null;
+        return placeService.updatePlace(id, updatedPlace);
     }
 
     @DeleteMapping("/places/{id}")
     public void deletePlace(@PathVariable int id) {
-        places.removeIf(place -> place.getId() == id);
+        placeService.deletePlace(id);
     }
 }
+
