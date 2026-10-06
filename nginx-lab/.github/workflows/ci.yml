@@ -1,0 +1,47 @@
+
+name: CI - Nginx Lab
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Recuperer le code
+        uses: actions/checkout@v4
+
+      - name: Verifier Docker Compose
+        run: docker compose config -q
+
+      - name: Verifier la syntaxe JavaScript
+        run: |
+          docker run --rm \
+            -v "$PWD/backend:/app:ro" \
+            -w /app \
+            node:22-alpine \
+            node --check server.js
+
+      - name: Demarrer les services
+        run: docker compose up -d
+
+      - name: Verifier la configuration Nginx
+        run: docker compose exec -T nginx nginx -t
+
+      - name: Tester la page HTML
+        run: |
+          curl --retry 10 --retry-connrefused --retry-delay 2 \
+            --fail http://localhost:8080/ \
+            | grep "Bonjour depuis Nginx"
+
+      - name: Tester le backend via Nginx
+        run: |
+          curl --retry 10 --retry-connrefused --retry-delay 2 \
+            --fail http://localhost:8080/api/test \
+            | grep "Chemin reçu par Node.js : /test"
+
+      - name: Nettoyer les conteneurs de test
+        if: always()
+        run: docker compose down
