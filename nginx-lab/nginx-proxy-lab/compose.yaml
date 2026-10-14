@@ -7,7 +7,11 @@ services:
       - ./backend/server.js:/app/server.js:ro
     expose:
       - "3000"
-
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    expose:
+      - "6379"
   nginx:
     image: nginx:alpine
     ports:
